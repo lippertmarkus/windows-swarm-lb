@@ -1,0 +1,19 @@
+version: '3.3'
+
+services:
+    proxy:
+        image: lippertmarkus/windows-swarm-lb
+        environment:
+            UP_HOSTNAME: whoami
+        depends_on:
+            - whoami
+        deploy:
+            placement:
+                constraints:
+                    - node.role == manager
+
+    whoami:
+        image: stefanscherer/whoami
+        deploy:
+            endpoint_mode: dnsrr
+            replicas: 3
