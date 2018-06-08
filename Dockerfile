@@ -22,7 +22,7 @@ COPY ./nginx.conf C:/openresty/conf/nginx.conf
 FROM microsoft/windowsservercore
 
 WORKDIR C:/openresty
-CMD ["powershell", "./start.ps1"]
+CMD ["powershell", "C:\\start.ps1"]
 HEALTHCHECK --timeout=10s \
     CMD ["powershell", "-Command", "Invoke-WebRequest -Uri 'http://127.0.0.1:8080/health' -DisableKeepAlive -UseBasicParsing"]
 
