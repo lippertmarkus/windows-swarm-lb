@@ -1,6 +1,8 @@
 windows-swarm-lb
 ===
 
+[![Build status](https://ci.appveyor.com/api/projects/status/ex98maaeice55ysc?svg=true)](https://ci.appveyor.com/project/lippertmarkus/windows-swarm-lb)
+
 Dynamic load balancer inside a Windows Container for Docker Swarm Mode. 
 
 ## Background
