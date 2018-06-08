@@ -1,0 +1,29 @@
+version: 1.0.{build}
+
+image: Visual Studio 2017
+
+environment:
+  DOCKER_USER:
+    secure: ShafS1LGzLPJBTgcfPncFw==
+  DOCKER_PASS:
+    secure: el2RSHTAI6hlQKXQAYKuwu3M4UXKvjadnc+QF7VuK6s=
+
+install:
+- ps: docker version
+
+build_script:
+- ps: docker build -t windows-swarm-lb .
+
+test_script:
+- cmd: docker run windows-swarm-lb nginx -v
+
+deploy_script:
+- ps: >-
+    if ($env:APPVEYOR_REPO_BRANCH -eq "master") {
+        docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
+
+        docker tag windows-swarm-lb lippertmarkus/windows-swarm-lb
+        docker push lippertmarkus/windows-swarm-lb
+    }
+
+    
