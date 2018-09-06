@@ -79,7 +79,31 @@ function _M.lb_hash(self, host_port, key)
     end
 end
 
+local function has_value (tab, val)
+    for index, value in ipairs(tab) do
+        if value == val then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function backend_exists(client, ip)
+    local addrs = get_host_ips(client) 
+    if not addrs then 
+        return false
+    end
+
+    if has_value(addrs, ip) then
+        return true
+    end
+
+    return false
+end
+
 function _M.lb_cookie(self, host_port)
+    local balancer = require "ngx.balancer"
     local ck = require "resty.cookie"
     local cookie, err = ck:new()
     if not cookie then
@@ -90,17 +114,31 @@ function _M.lb_cookie(self, host_port)
     local cookie_name = "LBSESSION"
     local cookie_value = cookie:get(cookie_name)
 
-    if not cookie_value then
-        cookie_value = ngx.crc32_long(ngx.var.remote_port)
+    --- if no cookie is set, we set one to the next backend via RR
+    if (not cookie_value) or cookie_value == "" then
+        local host, err = self._dns_client:get(true)
+        if host then        
+            cookie_value = host
 
-        cookie:set({
-            key = cookie_name, 
-            value = cookie_value,
-            path = "/"
-        })
+            cookie:set({
+                key = cookie_name, 
+                value = cookie_value,
+                path = "/"
+            })
+        end
+    elseif not backend_exists(self._dns_client, cookie_value) then --- if cookie is already set, check if backend is still up
+            cookie:set({
+                key = cookie_name, 
+                value = "",
+                path = "/"
+            })
     end
 
-    return self:lb_hash(host_port, cookie_value)
+    local ok, err = balancer.set_current_peer(cookie_value, host_port)
+    if not ok then  
+        ngx.log(ngx.ERR, "failed to set the current peer: ", cookie_value)  
+        return ngx.exit(500)
+    end
 end
 
 return _M
